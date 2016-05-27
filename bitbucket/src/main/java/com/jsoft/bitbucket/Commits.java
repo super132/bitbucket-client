@@ -4,10 +4,10 @@
 package com.jsoft.bitbucket;
 
 /**
- * Commits in Bitbucket.
+ * BitBucket Commits of a repo.
  * @author Jason Wong
  *
  */
-public interface Commit extends Resource {
+public interface Commits {
 
 }

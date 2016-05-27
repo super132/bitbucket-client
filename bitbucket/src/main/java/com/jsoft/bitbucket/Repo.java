@@ -3,6 +3,7 @@
  */
 package com.jsoft.bitbucket;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -10,19 +11,21 @@ import java.util.List;
  * @author hcsrxo6
  *
  */
-public interface Repo {
+public interface Repo extends Resource {
 
     /**
      * Obtain the watchers of this repository.
      * @return The list of watchers.
+     * @throws IOException If errors occur
      */
-    List<User> watchers();
+    List<User> watchers() throws IOException;
 
     /**
      * Obtain the forks of this repository.
      * @return The list of forks.
+     * @throws IOException If errors occur
      */
-    List<Repo> forks();
+    List<Repo> forks() throws IOException;
 
     /**
      * The repository information.
@@ -33,14 +36,22 @@ public interface Repo {
     /**
      * Pull requests object of this repo.
      * @return The Pull requests object that manage pull requests.
+     * @throws IOException If errors occur
      */
-    PullRequests requests();
+    PullRequests requests() throws IOException;
 
     /**
      * Branches object of this repo.
      * @return The branches object that manage branches.
+     * @throws IOException If errors occur
      */
-    Branches branches();
+    Branches branches() throws IOException;
+
+    /**
+     * Commits object to query repository commits. 
+     * @return Commits
+     */
+    Commits commits();
 
     /**
      * Repository settings used when creating new repo.
@@ -48,6 +59,10 @@ public interface Repo {
      *
      */
     final class Settings {
+        /**
+         * Default SCM type.
+         */
+        private static final String GIT = "git";
         /**
          * SCM type.
          */
@@ -88,7 +103,7 @@ public interface Repo {
          * @param policy The forking policy
          */
         public Settings(final boolean open, ForkPolicy policy) {
-            this("", "", open, "", policy, "", false, false);
+            this(Settings.GIT, "", open, "", policy, "", false, false);
         }
 
         /**
@@ -100,7 +115,7 @@ public interface Repo {
          */
         public Settings(final boolean open, ForkPolicy policy,
             final String desc) {
-            this("", "", open, desc, policy, "", false, false);
+            this(Settings.GIT, "", open, desc, policy, "", false, false);
         }
 
         /**
@@ -109,8 +124,9 @@ public interface Repo {
          * @param open Indicate if the repo is public
          * @param policy The forking policy
          */
-        public Settings(final String type, final boolean open, ForkPolicy policy) {
-            this("", "", open, "", policy, "", false, false);
+        public Settings(final String type, final boolean open,
+            ForkPolicy policy) {
+            this(Settings.GIT, "", open, "", policy, "", false, false);
         }
 
         /**
@@ -120,11 +136,11 @@ public interface Repo {
          */
         public Settings(final boolean open, ForkPolicy policy,
             final boolean tracker, final boolean wiki) {
-            this("", "", open, "", policy, "", tracker, wiki);
+            this(Settings.GIT, "", open, "", policy, "", tracker, wiki);
         }
 
         /**
-         * Create repo settings
+         * Create repo full settings.
          * @param scm The SCM type, either "hg" or "git".
          * @param name The name of the repo.
          * @param open Is it public
@@ -134,7 +150,7 @@ public interface Repo {
          * @param tracker With issue tracker?
          * @param wiki With wiki?
          */
-        private Settings(
+        public Settings(
             final String scm,
             final String name,
             final boolean open,
@@ -237,19 +253,46 @@ public interface Repo {
         /**
          * Deny all forking.
          */
-        NO_FORKS("no_forks");
-        
+        NO_FORKS("no_forks"),
+        /**
+         * Unknown fork policy.
+         */
+        UNKNOWN("");
         /**
          * The value that submit to BitBucket API.
          */
         private String value;
 
+        /**
+         * Ctor.
+         * @param value The value.
+         */
         private ForkPolicy(final String value) {
             this.value = value;
         }
 
+        /**
+         * Obtain the value.
+         * @return The value.
+         */
         public String value() {
             return this.value;
+        }
+
+        /**
+         * Look up the ForkPolicy from Bitbucket API value.
+         * @param value The value from REST API
+         * @return ForkPolicy
+         */
+        public static ForkPolicy fromValue(final String value) {
+            ForkPolicy result = ForkPolicy.UNKNOWN;
+            for (final ForkPolicy policy : ForkPolicy.values()) {
+                if (policy.value().equals(value)) {
+                    result = policy;
+                    break;
+                }
+            }
+            return result;
         }
     }
 }

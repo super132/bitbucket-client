@@ -8,6 +8,6 @@ package com.jsoft.bitbucket;
  * @author hcsrxo6
  *
  */
-public interface User {
+public interface User extends Resource {
 
 }

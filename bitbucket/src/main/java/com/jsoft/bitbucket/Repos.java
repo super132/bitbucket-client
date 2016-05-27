@@ -3,6 +3,7 @@
  */
 package com.jsoft.bitbucket;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -17,27 +18,31 @@ public interface Repos {
      * @param owner The owner username of the repository.
      * @param slug The repository slug.
      * @return The repository.
+     * @throws IOException If errors occur
      */
-    Repo get(final String owner, final String slug);
+    Repo get(final String owner, final String slug) throws IOException;
 
     /**
      * Return a list of repository of an account / team.
      * @param owner The owner account to search.
      * @return A list of repository under the owner.
+     * @throws IOException If errors occur
      */
-    List<Repo> list(final User owner);
+    List<Repo> list(final User owner) throws IOException;
 
     /**
      * Return a list of all public repositories.
      * @return All public repositories.
+     * @throws IOException If errors occur
      */
-    List<Repo> list();
+    List<Repo> list() throws IOException;
 
     /**
      * Return a list of all repositories based on the role.
      * @return All public repositories.
+     * @throws IOException If errors occur
      */
-    List<Repo> list(final Repos.Role role);
+    List<Repo> list(final Repos.Role role) throws IOException;
 
     /**
      * Create a repository with specific settings
@@ -45,16 +50,18 @@ public interface Repos {
      * @param slug The repository slug.
      * @param settings The repository setting.
      * @return The newly created repository.
+     * @throws IOException If errors occur
      */
     Repo create(final String owner, final String slug,
-        final Repo.Settings settings);
+        final Repo.Settings settings) throws IOException;
 
     /**
      * Delete a repository
      * @param owner The owner username of the repository.
      * @param slug The repository slug.
+     * @throws IOException If errors occur
      */
-    void delete(final String owner, final String slug);
+    void delete(final String owner, final String slug) throws IOException;
 
     /**
      * The role of listing repositories.

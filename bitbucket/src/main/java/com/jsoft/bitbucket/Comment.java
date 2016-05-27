@@ -8,6 +8,6 @@ package com.jsoft.bitbucket;
  * @author hcsrxo6
  *
  */
-public interface Comment {
+public interface Comment extends Resource {
 
 }

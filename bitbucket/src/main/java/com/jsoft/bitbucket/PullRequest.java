@@ -8,7 +8,7 @@ package com.jsoft.bitbucket;
  * @author Jason Wong
  *
  */
-public interface PullRequest {
+public interface PullRequest extends Resource {
 
     /**
      * Update the current pull request with details.
