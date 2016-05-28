@@ -5,6 +5,7 @@ package com.jsoft.bitbucket;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * Bitbucket repositories.
@@ -14,7 +15,8 @@ import java.util.List;
 public interface Repos {
 
     /**
-     * Return a repository.
+     * Return a repository. It throws {@link NoSuchElementException} if no
+     * repository is found.
      * @param owner The owner username of the repository.
      * @param slug The repository slug.
      * @return The repository.
@@ -28,7 +30,7 @@ public interface Repos {
      * @return A list of repository under the owner.
      * @throws IOException If errors occur
      */
-    List<Repo> list(final User owner) throws IOException;
+    Iterable<Repo> list(final String owner) throws IOException;
 
     /**
      * Return a list of all public repositories.

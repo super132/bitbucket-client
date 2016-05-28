@@ -9,8 +9,10 @@ import com.jsoft.bitbucket.Commits;
 import com.jsoft.bitbucket.PullRequests;
 import com.jsoft.bitbucket.Repo;
 import com.jsoft.bitbucket.User;
+import com.jsoft.bitbucket.Repo.ForkPolicy;
 import java.io.IOException;
 import java.util.List;
+import javax.json.JsonObject;
 
 /**
  * Bitbucket Cloud Repository implementation. The REST API used is Bitbucket
@@ -53,6 +55,29 @@ public final class BbRepo extends AbstractResource implements Repo {
         super(id, creation);
         this.req = request;
         this.details = info;
+    }
+
+    /**
+     * Ctor.
+     * @param request HTTP request.
+     * @param value The JSON object.
+     */
+    public BbRepo(final Request request, final JsonObject value) {
+        this(
+            request,
+            value.getString("uuid"),
+            value.getString("created_on"),
+            new Repo.Settings(
+                value.getString("scm"),
+                value.getString("name"),
+                !value.getBoolean("is_private"),
+                value.getString("description"),
+                ForkPolicy.fromValue(value.getString("fork_policy")),
+                value.getString("language"),
+                value.getBoolean("has_issues"),
+                value.getBoolean("has_wiki")
+            )
+        );
     }
 
     @Override

@@ -24,7 +24,7 @@ public final class Cloud implements BitBucket {
     /**
      * User agent.
      */
-    private static final String USER_AGENT = "bitbucket-client";
+    public static final String USER_AGENT = "bitbucket-client";
 
     /**
      * Default request to start with.
