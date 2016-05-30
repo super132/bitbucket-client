@@ -25,80 +25,63 @@
 package com.jsoft.bitbucket.cloud;
 
 import com.jcabi.http.Request;
-import com.jsoft.bitbucket.BitBucket;
-import com.jsoft.bitbucket.BitBucketRequest;
-import com.jsoft.bitbucket.Repos;
-import com.jsoft.bitbucket.Snippets;
-import com.jsoft.bitbucket.Teams;
-import com.jsoft.bitbucket.Users;
-import javax.ws.rs.core.HttpHeaders;
+import com.jsoft.bitbucket.Repo;
+import com.jsoft.bitbucket.User;
+import java.io.IOException;
+import javax.json.JsonObject;
 
 /**
- * The Bitbucket Cloud API 2 client.
- * @author Jason Wong
+ * BitBucket user.
+ * @author hcsrxo6
  *
  */
-public final class Cloud implements BitBucket {
+public final class BbUser extends AbstractResource implements User {
 
     /**
-     * Default request to start with.
+     * The display name of the user.
      */
-    private static final Request REQUEST =
-        new BitBucketRequest("https://api.bitbucket.org").request();
+    private final transient String name;
 
     /**
-     * Http request object.
+     * Ctor.
+     * @param req The HTTP request
+     * @param The JSON object from REST API.
      */
-    private final transient Request req;
-
-    /**
-     * Default client creation.
-     */
-    public Cloud() {
-        this(Cloud.REQUEST);
-    }
-
-    /**
-     * 
-     * @param token
-     */
-    public Cloud(final String token) {
+    public BbUser(final Request req, final JsonObject value) {
         this(
-            Cloud.REQUEST.header(
-                HttpHeaders.AUTHORIZATION,
-                String.format("token %s", token)
-            )
+            value.getString("uuid"),
+            value.getString("created_on"),
+            value.getString("display_name")
         );
     }
 
     /**
-     * Create client with {@link Request} specified.
+     * Ctor.
+     * @param id The user ID.
+     * @param creation The creation date string
+     * @param name The user display name
      */
-    public Cloud(final Request request) {
-        this.req = request;
+    public BbUser(final String id, final String creation, final String name) {
+        super(id, creation);
+        this.name = name;
     }
 
     @Override
-    public Repos repositories() {
-        return new BbRepos(this.req);
+    public String displayName() {
+        return this.name;
     }
 
     @Override
-    public Teams teams() {
+    public Iterable<User> followers() throws IOException {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public Users users() {
+    public Iterable<Repo> repositories() throws IOException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    @Override
-    public Snippets snippets() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
+    
 }

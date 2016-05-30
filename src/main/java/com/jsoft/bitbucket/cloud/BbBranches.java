@@ -22,13 +22,28 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-package com.jsoft.bitbucket;
+package com.jsoft.bitbucket.cloud;
+
+import com.jcabi.http.Request;
+import com.jsoft.bitbucket.Branches;
 
 /**
- * Branches that perform operations on branches in a repo.
- * @author hcsrxo6
+ * Bitbucket Cloud branches.
+ * @author Jason Wong
  *
  */
-public interface Branches {
+public final class BbBranches implements Branches {
 
+    /**
+     * HTTP request.
+     */
+    private final transient Request req;
+
+    /**
+     * Ctor.
+     * @param request HTTP request.
+     */
+    public BbBranches(final Request request) {
+        this.req = request;
+    }
 }

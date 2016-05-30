@@ -22,13 +22,28 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-package com.jsoft.bitbucket;
+package com.jsoft.bitbucket.cloud;
+
+import com.jcabi.http.Request;
+import com.jsoft.bitbucket.Commits;
 
 /**
- * Branches that perform operations on branches in a repo.
- * @author hcsrxo6
+ * BitBucket commits.
+ * @author Jason Wong
  *
  */
-public interface Branches {
+public final class BbCommits implements Commits {
 
+    /**
+     * HTTP request to talk to BitBucket cloud.
+     */
+    private final transient Request req;
+
+    /**
+     * Ctor.
+     * @param request The HTTP request.
+     */
+    public BbCommits(final Request request) {
+        this.req = request;
+    }
 }

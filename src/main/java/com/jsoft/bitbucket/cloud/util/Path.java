@@ -22,13 +22,40 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-package com.jsoft.bitbucket;
+package com.jsoft.bitbucket.cloud.util;
+
+import com.google.common.base.Joiner;
+import java.util.Arrays;
+import java.util.List;
 
 /**
- * Branches that perform operations on branches in a repo.
- * @author hcsrxo6
- *
+ * To build REST request path. 
+ * @author Jason Wong
  */
-public interface Branches {
+public final class Path {
 
+    /**
+     * The base path.
+     */
+    private final transient String base;
+
+    /**
+     * The request parts.
+     */
+    private final transient List<String> parts;
+
+    /**
+     * Ctor.
+     * @param base The base path
+     * @param parts The path parts.
+     */
+    public Path(final String base, final String... parts) {
+        this.base = base;
+        this.parts = Arrays.asList(parts);
+    }
+
+    @Override
+    public String toString() {
+        return Joiner.on("/").join(this.base, this.parts);
+    }
 }

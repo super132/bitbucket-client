@@ -24,11 +24,44 @@
  */
 package com.jsoft.bitbucket;
 
+import com.jcabi.http.Request;
+import com.jcabi.http.request.ApacheRequest;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+
 /**
- * Branches that perform operations on branches in a repo.
- * @author hcsrxo6
+ * The utility object for creating HTTP request.
+ * @author Jason Wong
  *
  */
-public interface Branches {
+public final class BitBucketRequest {
 
+    /**
+     * User agent.
+     */
+    private static final String USER_AGENT = "bitbucket-client";
+
+    /**
+     * The BitBucket REST URL.
+     */
+    private final transient String url;
+
+    /**
+     * Ctor.
+     * @param endpoint The BitBucket REST API endpoint
+     */
+    public BitBucketRequest(final String endpoint) {
+        this.url = endpoint;
+    }
+
+    /**
+     * Obtain the HTTP request.
+     * @return The request to the endpoint.
+     */
+    public Request request() {
+        return new ApacheRequest(this.url)
+            .header(HttpHeaders.USER_AGENT, BitBucketRequest.USER_AGENT)
+            .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+    }
 }

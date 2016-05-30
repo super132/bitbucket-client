@@ -1,15 +1,35 @@
 /**
+ * Copyright (c) 2016 JSoft.com
  * 
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ * 
+ * The above copyright notice and this
+ * permission notice shall be included in all copies or substantial
+ * portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT
+ * WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+ * TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ * PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 package com.jsoft.bitbucket.cloud.util;
 
 import com.jcabi.http.Request;
-import com.jcabi.http.request.ApacheRequest;
 import com.jcabi.http.response.BitBucketResponse;
 import com.jcabi.http.response.JsonResponse;
-import com.jsoft.bitbucket.cloud.Cloud;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -17,8 +37,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
 
 /**
  * Paginated Iterable that represents the paginated response from BitBucket
@@ -65,8 +83,8 @@ public final class ItPaginated<T> implements Iterable<T> {
      */
     public ItPaginated(final Request request, final JsonObject data,
         final Class<? extends T> clazz) {
-        this.total = data.getInt("size");
-        this.size = data.getInt("pagelen");
+        this.total = data.getInt("size", 0);
+        this.size = data.getInt("pagelen", 0);
         this.next = data.getString("next", "");
         this.req = request;
         this.clazz = clazz;
@@ -77,7 +95,7 @@ public final class ItPaginated<T> implements Iterable<T> {
 
     @Override
     public Iterator<T> iterator() {
-        return new PaginatedIterator(this.next, this.storage);
+        return new PaginatedIterator(this.req, this.next, this.storage);
     }
  
     /**
@@ -97,10 +115,8 @@ public final class ItPaginated<T> implements Iterable<T> {
                 );
             }
             return result;
-        } catch (final SecurityException see) {
-            throw new IllegalStateException(see);
-        } catch (final ReflectiveOperationException roe) {
-            throw new IllegalStateException(roe);
+        } catch (final Exception ex) {
+            throw new IllegalStateException(ex);
         }
     }
 
@@ -108,12 +124,12 @@ public final class ItPaginated<T> implements Iterable<T> {
      * Paginated Iterator.
      * @author Jason Wong
      */
-    private class PaginatedIterator implements Iterator<T> {
+    private final class PaginatedIterator implements Iterator<T> {
 
         /**
          * The current index.
          */
-        private transient int current = 0;
+        private transient int current;
 
         /**
          * The next REST end point.
@@ -126,42 +142,35 @@ public final class ItPaginated<T> implements Iterable<T> {
         private final transient List<T> storage;
 
         /**
+         * The request to retrieve more results.
+         */
+        private final transient Request req;
+
+        /**
          * Ctor.
          * @param next
          * @param init
          */
-        public PaginatedIterator(final String next, final List<T> init) {
+        public PaginatedIterator(final Request request, final String next,
+            final List<T> init) {
+            this.req = request;
+            this.current = 0;
             this.next = next;
             this.storage = new LinkedList<T>(init);
         }
 
         @Override
         public boolean hasNext() {
-            final boolean result;
+            boolean result;
             if (this.current < this.storage.size()) {
                 result = true;
-            } else {
+            } else if (this.current >= ItPaginated.this.total) {
                 result = false;
-            }
-            return result;
-        }
-        @Override
-        public T next() {
-            final T result;
-            if (this.hasNext()) {
-                result = ItPaginated.this.storage.get(this.current);
-                ++this.current;
             } else {
-                if (this.current >= ItPaginated.this.total) {
-                    throw new NoSuchElementException(
-                        "No more elements available."
-                    );
-                }
                 try {
-                    final JsonObject resp = new ApacheRequest(this.next)
-                        .header(HttpHeaders.USER_AGENT, Cloud.USER_AGENT)
-                        .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                    final JsonObject resp = this.req.uri()
+                        .set(URI.create(this.next))
+                        .back()
                         .method(Request.GET)
                         .fetch()
                         .as(BitBucketResponse.class)
@@ -173,13 +182,33 @@ public final class ItPaginated<T> implements Iterable<T> {
                             resp.getJsonArray("values")
                         )
                     );
-                    result = this.storage.get(this.current);
-                    ++this.current;
+                    this.next = resp.getString("next");
+                    result = true;
                 } catch (final IOException ex) {
-                    throw new NoSuchElementException(ex.getMessage());
+                    result = false;
                 }
             }
             return result;
+        }
+
+        @Override
+        public T next() {
+            final T result;
+            if (!this.hasNext()) {
+                throw new NoSuchElementException(
+                    "No more elements available."
+                );
+            }
+            result = this.storage.get(this.current);
+            ++this.current;
+            return result;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException(
+                "Removal is not supported."
+            );
         }
         
     }
