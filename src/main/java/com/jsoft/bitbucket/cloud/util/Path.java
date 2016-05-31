@@ -26,7 +26,10 @@ package com.jsoft.bitbucket.cloud.util;
 
 import com.google.common.base.Joiner;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Queue;
 
 /**
  * To build REST request path. 
@@ -56,6 +59,13 @@ public final class Path {
 
     @Override
     public String toString() {
-        return Joiner.on("/").join(this.base, this.parts);
+        final Queue<String> queue = new PriorityQueue<String>(this.parts);
+        final String result;
+        if (queue.isEmpty()) {
+            result = this.base;
+        } else {
+            result = Joiner.on("/").join(this.base, queue.poll(), queue.toArray(new Object[0]));
+        }
+        return result;
     }
 }
