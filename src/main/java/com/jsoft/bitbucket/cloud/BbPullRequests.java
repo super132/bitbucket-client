@@ -45,7 +45,7 @@ public final class BbPullRequests implements PullRequests {
     /**
      * The base REST API URI.
      */
-    private static final String API_BASE = "/2.0/respositories";
+    private static final String API_BASE = "/2.0/repositories";
 
     /**
      * HTTP request to talk to BitBucket cloud.

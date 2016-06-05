@@ -51,7 +51,7 @@ public final class BbRepo extends AbstractResource implements Repo {
     /**
      * The base REST API URI.
      */
-    private static final String API_BASE = "/2.0/respositories";
+    private static final String API_BASE = "/2.0/repositories";
 
     /**
      * The HTTP request object.
