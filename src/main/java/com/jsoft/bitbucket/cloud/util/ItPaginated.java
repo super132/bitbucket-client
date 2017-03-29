@@ -95,7 +95,9 @@ public final class ItPaginated<T> implements Iterable<T> {
 
     @Override
     public Iterator<T> iterator() {
-        return new PaginatedIterator(this.req, this.next, this.storage);
+        return new PaginatedIterator(
+            this.req, this.next, this.storage, "".equals(this.next)
+        );
     }
  
     /**
@@ -121,13 +123,13 @@ public final class ItPaginated<T> implements Iterable<T> {
     }
 
     /**
+     * The current index.
      * Paginated Iterator.
      * @author Jason Wong
      */
     private final class PaginatedIterator implements Iterator<T> {
 
         /**
-         * The current index.
          */
         private transient int current;
 
@@ -147,16 +149,24 @@ public final class ItPaginated<T> implements Iterable<T> {
         private final transient Request req;
 
         /**
+         * Indicate if the last page is reached.
+         */
+        private boolean last;
+
+        /**
          * Ctor.
+         * @param request
          * @param next
          * @param init
+         * @param one
          */
-        public PaginatedIterator(final Request request, final String next,
-            final List<T> init) {
+        PaginatedIterator(final Request request, final String next,
+            final List<T> init, final boolean one) {
             this.req = request;
             this.current = 0;
             this.next = next;
             this.storage = new LinkedList<T>(init);
+            this.last = one;
         }
 
         @Override
@@ -164,27 +174,33 @@ public final class ItPaginated<T> implements Iterable<T> {
             boolean result;
             if (this.current < this.storage.size()) {
                 result = true;
-            } else if (this.current >= ItPaginated.this.total) {
-                result = false;
             } else {
-                try {
-                    final JsonObject resp = this.req.uri()
-                        .set(URI.create(this.next))
-                        .back()
-                        .method(Request.GET)
-                        .fetch()
-                        .as(BitBucketResponse.class)
-                        .assertStatus(HttpURLConnection.HTTP_OK)
-                        .as(JsonResponse.class)
-                        .json().readObject();
-                    this.storage.addAll(
-                        ItPaginated.this.getValues(
-                            resp.getJsonArray("values")
-                        )
-                    );
-                    this.next = resp.getString("next");
-                    result = true;
-                } catch (final IOException ex) {
+                if (!this.last) {
+                    try {
+                        final JsonObject resp = this.req.uri()
+                            .set(URI.create(this.next))
+                            .back()
+                            .method(Request.GET)
+                            .fetch()
+                            .as(BitBucketResponse.class)
+                            .assertStatus(HttpURLConnection.HTTP_OK)
+                            .as(JsonResponse.class)
+                            .json().readObject();
+                        this.last = resp.getInt("page") ==
+                            ItPaginated.this.total;
+                        this.storage.clear();
+                        this.storage.addAll(
+                            ItPaginated.this.getValues(
+                                resp.getJsonArray("values")
+                            )
+                        );
+                        this.current = 0;
+                        this.next = resp.getString("next");
+                        result = true;
+                    } catch (final IOException ex) {
+                        result = false;
+                    }
+                } else {
                     result = false;
                 }
             }
@@ -210,6 +226,6 @@ public final class ItPaginated<T> implements Iterable<T> {
                 "Removal is not supported."
             );
         }
-        
+
     }
 }

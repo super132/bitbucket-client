@@ -19,38 +19,12 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-package com.jsoft.bitbucket;
 
 /**
- * BitBucket client.
+ * The BitBucket client APIs Cloud implementation.
  *
  * @author Jason Wong (super132j@yahoo.com)
  * @version $Id$
  * @since 0.1
  */
-public interface BitBucket {
-
-    /**
-     * Repositories in Bitbucket.
-     * @return Repositories object.
-     */
-    Repos repositories();
-
-    /**
-     * Teams in Bitbucket.
-     * @return Teams object.
-     */
-    Teams teams();
-
-    /**
-     * Users in Bitbucket.
-     * @return Users object.
-     */
-    Users users();
-
-    /**
-     * Snippets in Bitbucket.
-     * @return Snippets object.
-     */
-    Snippets snippets();
-}
+package com.jsoft.bitbucket.cloud;

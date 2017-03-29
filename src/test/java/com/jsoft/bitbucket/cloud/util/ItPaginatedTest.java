@@ -71,6 +71,30 @@ public final class ItPaginatedTest {
     }
 
     /**
+     * {@link ItPaginated} can iterate single page record.
+     */
+    @Test
+    public void iteratesSinglePageRecord() {
+        final Iterator<SimpleObject> itr = new ItPaginated<SimpleObject>(
+            new FakeRequest(
+                HttpURLConnection.HTTP_OK,
+                "OK",
+                Collections.<Map.Entry<String, String>>emptyList(),
+                // @checkstyle LineLength (1 line)
+                "{\"size\":2,\"page\":2,\"pagelen\":1,\"next\":\"\",\"values\":[{\"string\":\"Testing 2\"}]}".getBytes()
+            ),
+            ItPaginatedTest.jsonFromString(
+                // @checkstyle LineLength (1 line)
+                "{\"size\":1,\"page\":1,\"pagelen\":1,\"next\":\"\",\"values\":[{\"string\":\"Testing\"}]}"
+            ),
+            SimpleObject.class
+        ).iterator();
+        MatcherAssert.assertThat(itr.hasNext(), Matchers.is(true));
+        MatcherAssert.assertThat(itr.next().value(), Matchers.is("Testing"));
+        MatcherAssert.assertThat(itr.hasNext(), Matchers.is(false));
+    }
+
+    /**
      * Create JSON object from JSON string.
      * @param json
      * @return
