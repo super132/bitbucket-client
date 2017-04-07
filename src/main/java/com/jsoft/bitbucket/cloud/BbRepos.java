@@ -76,43 +76,25 @@ public final class BbRepos implements Repos {
 
     @Override
     public Iterable<Repo> list(final String owner) throws IOException {
-        final JsonObject resp = this.req.uri().path(
-            new Path(BbRepos.API_BASE, owner).toString()
-        ).back().method(Request.GET)
-        .fetch()
-        .as(BitBucketResponse.class)
-        .assertStatusOK()
-        .as(JsonResponse.class)
-        .json().readObject();
-        return new ItPaginated<Repo>(this.req, resp, BbRepo.class);
+        return new ItPaginated<Repo>(
+            this.req, new Path(BbRepos.API_BASE, owner), BbRepo.class
+        );
     }
 
     @Override
     public Iterable<Repo> list() throws IOException {
-        final JsonObject resp = this.req.uri().path(
-            BbRepos.API_BASE
-        ).back().method(Request.GET)
-        .fetch()
-        .as(BitBucketResponse.class)
-        .assertStatusOK()
-        .as(JsonResponse.class)
-        .json().readObject();
-        return new ItPaginated<Repo>(this.req, resp, BbRepo.class);
+        return new ItPaginated<Repo>(
+            this.req, new Path(BbRepos.API_BASE), BbRepo.class
+        );
     }
 
     @Override
     public Iterable<Repo> list(final Role role) throws IOException {
-        final JsonObject resp = this.req.uri().path(
-            BbRepos.API_BASE
-        ).queryParam("role", role.value())
-        .back()
-        .method(Request.GET)
-        .fetch()
-        .as(BitBucketResponse.class)
-        .assertStatusOK()
-        .as(JsonResponse.class)
-        .json().readObject();
-        return new ItPaginated<Repo>(this.req, resp, BbRepo.class);
+        return new ItPaginated<Repo>(
+            this.req.uri().queryParam("role", role.value()).back(),
+            new Path(BbRepos.API_BASE),
+            BbRepo.class
+        );
     }
 
     @Override

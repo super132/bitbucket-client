@@ -26,12 +26,10 @@ package com.jsoft.bitbucket.cloud.util;
 
 import com.jcabi.http.Request;
 import com.jcabi.http.request.FakeRequest;
-import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
-import javax.json.Json;
 import javax.json.JsonObject;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -50,17 +48,23 @@ public final class ItPaginatedTest {
     @Test
     public void iteratesMultiplePageRecords() {
         final Iterator<SimpleObject> itr = new ItPaginated<SimpleObject>(
-            new FakeRequest(
-                HttpURLConnection.HTTP_OK,
-                "OK",
-                Collections.<Map.Entry<String, String>>emptyList(),
-                // @checkstyle LineLength (1 line)
-                "{\"size\":2,\"page\":2,\"pagelen\":1,\"next\":\"http://abc.com/more\",\"values\":[{\"string\":\"Testing 2\"}]}".getBytes()
+            new RRFakeRequest(
+                new FakeRequest(
+                    HttpURLConnection.HTTP_OK,
+                    "OK",
+                    Collections.<Map.Entry<String, String>>emptyList(),
+                    // @checkstyle LineLength (1 line)
+                    "{\"size\":2,\"page\":1,\"pagelen\":1,\"next\":\"http://abc.com/more\",\"values\":[{\"string\":\"Testing\"}]}".getBytes()
+                ),
+                new FakeRequest(
+                    HttpURLConnection.HTTP_OK,
+                    "OK",
+                    Collections.<Map.Entry<String, String>>emptyList(),
+                    // @checkstyle LineLength (1 line)
+                    "{\"size\":2,\"page\":2,\"pagelen\":1,\"values\":[{\"string\":\"Testing 2\"}]}".getBytes()
+                )
             ),
-            ItPaginatedTest.jsonFromString(
-                // @checkstyle LineLength (1 line)
-                "{\"size\":2,\"page\":1,\"pagelen\":1,\"next\":\"http://abc.com/more\",\"values\":[{\"string\":\"Testing\"}]}"
-            ),
+            new Path("/test"),
             SimpleObject.class
         ).iterator();
         MatcherAssert.assertThat(itr.hasNext(), Matchers.is(true));
@@ -81,12 +85,9 @@ public final class ItPaginatedTest {
                 "OK",
                 Collections.<Map.Entry<String, String>>emptyList(),
                 // @checkstyle LineLength (1 line)
-                "{\"size\":2,\"page\":2,\"pagelen\":1,\"next\":\"\",\"values\":[{\"string\":\"Testing 2\"}]}".getBytes()
+                "{\"size\":1,\"page\":1,\"pagelen\":1,\"next\":\"\",\"values\":[{\"string\":\"Testing\"}]}".getBytes()
             ),
-            ItPaginatedTest.jsonFromString(
-                // @checkstyle LineLength (1 line)
-                "{\"size\":1,\"page\":1,\"pagelen\":1,\"next\":\"\",\"values\":[{\"string\":\"Testing\"}]}"
-            ),
+            new Path("/test2"),
             SimpleObject.class
         ).iterator();
         MatcherAssert.assertThat(itr.hasNext(), Matchers.is(true));
@@ -95,12 +96,22 @@ public final class ItPaginatedTest {
     }
 
     /**
-     * Create JSON object from JSON string.
-     * @param json
-     * @return
+     * {@link ItPaginated} can iterate single page with no record.
      */
-    private static JsonObject jsonFromString(final String json) {
-        return Json.createReader(new StringReader(json)).readObject();
+    @Test
+    public void iteratesSinglePageNoRecord() {
+        final Iterator<SimpleObject> itr = new ItPaginated<SimpleObject>(
+            new FakeRequest(
+                HttpURLConnection.HTTP_OK,
+                "OK",
+                Collections.<Map.Entry<String, String>>emptyList(),
+                // @checkstyle LineLength (1 line)
+                "{\"size\":1,\"page\":1,\"pagelen\":1,\"next\":\"\",\"values\":[]}".getBytes()
+            ),
+            new Path("/test2"),
+            SimpleObject.class
+        ).iterator();
+        MatcherAssert.assertThat(itr.hasNext(), Matchers.is(false));
     }
 
     /**

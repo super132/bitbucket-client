@@ -24,15 +24,13 @@
  */
 package com.jsoft.bitbucket.cloud.util;
 
+import com.google.common.collect.EvictingQueue;
 import com.jcabi.http.Request;
 import com.jcabi.http.response.BitBucketResponse;
 import com.jcabi.http.response.JsonResponse;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import javax.json.JsonArray;
@@ -47,21 +45,6 @@ import javax.json.JsonObject;
 public final class ItPaginated<T> implements Iterable<T> {
 
     /**
-     * The total number of results expected.
-     */
-    private final transient int total;
-
-    /**
-     * The page size.
-     */
-    private final transient int size;
-
-    /**
-     * The endpoint to call for next page records.
-     */
-    private transient String next;
-
-    /**
      * HTTP request.
      */
     private final transient Request req;
@@ -72,32 +55,26 @@ public final class ItPaginated<T> implements Iterable<T> {
     private final transient Class<? extends T> clazz;
 
     /**
-     * Internal storage.
+     * The URI path to the paginated request.
      */
-    private final transient List<T> storage;
+    private final transient Path path;
 
     /**
      * Ctor.
-     * @param data The JSON data of the paging response.
+     * @param requset The HTTP request object.
+     * @param path The URI path of the paging response.
      * @param clazz The target class of the iterable.
      */
-    public ItPaginated(final Request request, final JsonObject data,
+    public ItPaginated(final Request request, final Path path,
         final Class<? extends T> clazz) {
-        this.total = data.getInt("size", 0);
-        this.size = data.getInt("pagelen", 0);
-        this.next = data.getString("next", "");
         this.req = request;
         this.clazz = clazz;
-        this.storage = new LinkedList<T>(
-            this.getValues(data.getJsonArray("values"))
-        );
+        this.path = path;
     }
 
     @Override
     public Iterator<T> iterator() {
-        return new PaginatedIterator(
-            this.req, this.next, this.storage, "".equals(this.next)
-        );
+        return new PaginatedIterator(this.req, this.path);
     }
  
     /**
@@ -106,7 +83,7 @@ public final class ItPaginated<T> implements Iterable<T> {
      * @return The list
      */
     private List<T> getValues(final JsonArray values) {
-        final int length = Math.min(this.size, values.size());
+        final int length = values.size();
         List<T> result = new ArrayList<T>(length);
         try {
             for (int ind = 0; ind < length; ++ind) {
@@ -130,18 +107,19 @@ public final class ItPaginated<T> implements Iterable<T> {
     private final class PaginatedIterator implements Iterator<T> {
 
         /**
+         * The buffer size.
          */
-        private transient int current;
+        private static final int BUFFER = 100;
 
         /**
          * The next REST end point.
          */
-        private transient String next;
+        private transient String path;
 
         /**
          * Internal storage of this iterator.
          */
-        private final transient List<T> storage;
+        private transient EvictingQueue<T> storage;
 
         /**
          * The request to retrieve more results.
@@ -157,52 +135,39 @@ public final class ItPaginated<T> implements Iterable<T> {
          * Ctor.
          * @param request
          * @param next
-         * @param init
-         * @param one
          */
-        PaginatedIterator(final Request request, final String next,
-            final List<T> init, final boolean one) {
+        PaginatedIterator(final Request request, final Path uri) {
             this.req = request;
-            this.current = 0;
-            this.next = next;
-            this.storage = new LinkedList<T>(init);
-            this.last = one;
+            this.path = uri.toString();
+            this.last = false;
+            this.storage = EvictingQueue.create(PaginatedIterator.BUFFER);
         }
 
         @Override
         public boolean hasNext() {
             boolean result;
-            if (this.current < this.storage.size()) {
-                result = true;
-            } else {
-                if (!this.last) {
+            if (!this.last) {
+                if (this.storage.isEmpty()) {
                     try {
-                        final JsonObject resp = this.req.uri()
-                            .set(URI.create(this.next))
-                            .back()
-                            .method(Request.GET)
-                            .fetch()
-                            .as(BitBucketResponse.class)
-                            .assertStatus(HttpURLConnection.HTTP_OK)
-                            .as(JsonResponse.class)
-                            .json().readObject();
-                        this.last = resp.getInt("page") ==
-                            ItPaginated.this.total;
-                        this.storage.clear();
+                        final JsonObject resp = this.get();
+                        this.path = resp.getString("next", "");
+                        this.last = "".equals(this.path);
                         this.storage.addAll(
                             ItPaginated.this.getValues(
                                 resp.getJsonArray("values")
                             )
                         );
-                        this.current = 0;
-                        this.next = resp.getString("next");
-                        result = true;
+                        result = !this.storage.isEmpty();
                     } catch (final IOException ex) {
                         result = false;
                     }
                 } else {
-                    result = false;
+                    result = true;
                 }
+            } else if (!this.storage.isEmpty()) {
+                result = true;
+            } else {
+                result = false;
             }
             return result;
         }
@@ -215,8 +180,7 @@ public final class ItPaginated<T> implements Iterable<T> {
                     "No more elements available."
                 );
             }
-            result = this.storage.get(this.current);
-            ++this.current;
+            result = this.storage.poll();
             return result;
         }
 
@@ -227,5 +191,21 @@ public final class ItPaginated<T> implements Iterable<T> {
             );
         }
 
+        /**
+         * Obtain the response from the path.
+         * @return The JSON response.
+         * @throws IOException If error occurs.
+         */
+        private JsonObject get() throws IOException {
+            return this.req.uri()
+            .path(this.path)
+            .back()
+            .method(Request.GET)
+            .fetch()
+            .as(BitBucketResponse.class)
+            .assertStatusOK()
+            .as(JsonResponse.class)
+            .json().readObject();
+        }
     }
 }

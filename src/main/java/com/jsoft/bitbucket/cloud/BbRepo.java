@@ -26,8 +26,6 @@ package com.jsoft.bitbucket.cloud;
 
 import com.google.common.base.Optional;
 import com.jcabi.http.Request;
-import com.jcabi.http.response.BitBucketResponse;
-import com.jcabi.http.response.JsonResponse;
 import com.jsoft.bitbucket.Branches;
 import com.jsoft.bitbucket.Commits;
 import com.jsoft.bitbucket.PullRequests;
@@ -126,32 +124,24 @@ public final class BbRepo extends AbstractResource implements Repo {
 
     @Override
     public Iterable<User> watchers() throws IOException {
-        final JsonObject resp = this.req.uri().path(
+        return new ItPaginated<User>(
+            this.req,
             new Path(
                 BbRepo.API_BASE, this.owner, this.details.name(), "watchers"
-            ).toString()
-        ).back().method(Request.GET)
-        .fetch()
-        .as(BitBucketResponse.class)
-        .assertStatusOK()
-        .as(JsonResponse.class)
-        .json().readObject();
-        return new ItPaginated<User>(this.req, resp, BbUser.class);
+            ),
+            BbUser.class
+        );
     }
 
     @Override
     public Iterable<Repo> forks() throws IOException {
-        final JsonObject resp = this.req.uri().path(
+        return new ItPaginated<Repo>(
+            this.req,
             new Path(
                 BbRepo.API_BASE, this.owner, this.details.name(), "forks"
-            ).toString()
-        ).back().method(Request.GET)
-        .fetch()
-        .as(BitBucketResponse.class)
-        .assertStatusOK()
-        .as(JsonResponse.class)
-        .json().readObject();
-        return new ItPaginated<Repo>(this.req, resp, BbRepo.class);
+            ),
+            BbRepo.class
+        );
     }
 
     @Override
